@@ -1,5 +1,6 @@
 const canvasWidth = 900
 const canvasHeight = 600
+//Cannot go over 60
 const _frameRate = 60
 let sensitivity = 5
 let canvas
@@ -9,6 +10,12 @@ let players = []
 let controllers = []
 let keyRelease = true
 
+/**
+ * Returns a random number between min (inclusive) and max (exclusive)
+ */
+function getRandomArbitrary(min, max) {
+    return Math.random() * (max - min) + min;
+}
 
 class aiController {
     constructor(startpositionx, startpositiony, width, length, speed, speedUpChance) {
@@ -17,26 +24,14 @@ class aiController {
         this.h = length
         this.speed = speed
         this.speedUpChance = speedUpChance
+        console.log(this.speedUpChance)
     }
 
     draw() {
         rect(this.pos.x, this.pos.y, this.w, this.h)
     }
 
-    down() {
-        if (!(this.pos.y + this.h + sensitivity > canvasHeight - 4)) {
-            this.pos.y = this.pos.y + sensitivity
-        }
-
-    }
-
-    up() {
-        if (!(this.pos.y - sensitivity < 4)) {
-            this.pos.y = this.pos.y - sensitivity
-        }
-
-    }
-    update(){
+    update() {
         let closestX = []
         let closestInv = []
         let _closest
@@ -44,25 +39,33 @@ class aiController {
         let obj
         //get balls with positive velocities
         balls.forEach((ball) => {
-            if(Math.sign(ball.vel.x) == 1){
+            if (Math.sign(ball.vel.x) === 1) {
                 closestX.push(ball)
-            }
-            else{
+            } else {
                 closestInv.push(ball)
             }
 
         })
-        if(closestX.length === 0){
+        if (closestX.length === 0) {
             _closest = Math.min(...closestInv.map(o => o.pos.x))
-            obj = closestInv.find(function(o){ return o.pos.x == _closest; })
-        }
-        else{
+            obj = closestInv.find(function (o) {
+                return o.pos.x === _closest;
+            })
+        } else {
             //get ball closest to AI
             _closest = Math.max(...closestX.map(o => o.pos.x))
-            obj = closestX.find(function(o){ return o.pos.x == _closest; })
+            obj = closestX.find(function (o) {
+                return o.pos.x === _closest;
+            })
         }
         //make target move words ball
-
+        if (obj.pos.y < (((this.pos.y + length) - this.pos.y) / 2) + this.pos.y) {
+            this.pos.y -= this.speed
+        } else if (obj.pos.y > (((this.pos.y + length) - this.pos.y) / 2) + this.pos.y) {
+            if (!(this.pos.y + this.h > (canvasHeight - 4))) {
+                this.pos.y += this.speed
+            }
+        }
     }
 }
 
@@ -92,7 +95,9 @@ class playerController {
         }
 
     }
-    update(){}
+
+    update() {
+    }
 
 }
 
@@ -111,8 +116,24 @@ class Ball {
         this.pos = createVector(x, y)
         this.rad = rad
         this.vel = createVector(0, 0)
-        this.accel = createVector(-2, -2)
-        this.timeout = false
+        let xAccel
+        let yAccel
+        //create two variables xaccel and yaccel and add the random arbitrary value to them
+        if (Math.random() < .5) {
+            xAccel = getRandomArbitrary(-3, -2)
+        } else {
+            xAccel = getRandomArbitrary(2, 3)
+        }
+        if (Math.random() < .5) {
+            yAccel = getRandomArbitrary(-3, -2)
+        } else {
+            yAccel= getRandomArbitrary(2, 3)
+        }
+        //log
+        console.warn(xAccel, yAccel)
+        //add to acceleration - zerored every frame
+        this.accel = createVector(xAccel, yAccel)
+        this.timeout = false;
     }
 
     draw() {
@@ -140,12 +161,23 @@ class Ball {
         //Check for collisions on controllers - use controllers not players
         controllers.forEach((controller) => {
             if (this.timeout === false) {
-
                 let isColliding = collideRectCircleVector(createVector(controller.pos.x, controller.pos.y), createVector(controller.w, controller.h), this.pos, this.rad * 2)
                 if (isColliding === true) {
-                    //check if origin of circle is too hig
-                    console.log("h")
                     this.vel.x = this.vel.x / -1;
+                    //vhange x and y velocity on hit to new value - make sure that velocity goes same way
+                    if (Math.sign(this.vel.x) === -1) {
+                        this.vel.x = getRandomArbitrary(-1, 0)
+                    } else {
+                        this.vel.x = getRandomArbitrary(0, 1)
+                    }
+                    if (Math.sign(this.vel.y) === -1) {
+                        this.vel.y = getRandomArbitrary(-1, 0)
+                    } else {
+                        this.vel.y = getRandomArbitrary(0, 1)
+                    }
+                    this.vel.x = getRandomArbitrary(0, 1)
+                    this.vel.y = getRandomArbitrary(0, 1)
+                    this.vel.mult(1 + Math.random())
                     this.timeout = true;
 
 
@@ -185,7 +217,7 @@ function setup() {
     //Set framerate
     frameRate(_frameRate)
     //Create objects
-    balls.push(new Ball(200, 200, 25))
+    balls.push(new Ball(canvasWidth / 2, canvasHeight / 2, 25))
     //Create boundaries
     boundaries.push(new Boundry(0, 1, 900, 1, true)) //Top
     boundaries.push(new Boundry(0, 599, 900, 599, true)) // Bottom
@@ -196,11 +228,11 @@ function setup() {
     players.push(controller)
     controllers.push(controller)
     //create AI controller
-    let aiController1 = new aiController(885, canvasHeight/2, 10, 80, 2, 1)
+    let aiController1 = new aiController(885, canvasHeight / 2, 10, 80, 2, 1)
     controllers.push(aiController1)
     //set balls collision reset system function
     balls.forEach((ball) => {
-        setInterval(ball.resetTimeout, 1000)
+        setInterval(ball.resetTimeout.bind(ball), 100)
 
     })
 }
@@ -210,12 +242,10 @@ function draw() {
     background(0);
     //check for keys pressed
     players.forEach((player) => {
-        if (keyRelease == false) {
-            if (keyCode == player.keyBindUp) {
-                console.log("up")
+        if (keyRelease === false) {
+            if (keyCode === player.keyBindUp) {
                 player.up()
-            } else if (keyCode == player.keyBindDown) {
-                console.log("down")
+            } else if (keyCode === player.keyBindDown) {
                 player.down()
             }
         }
@@ -238,3 +268,5 @@ function draw() {
         controller.draw()
     })
 }
+
+console.log(keyPressed, keyReleased, setup, draw)
