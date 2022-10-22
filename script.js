@@ -104,10 +104,11 @@ class playerController {
 class Boundry {
     //class for p5 line collisions
     //isHoriz is whether the boundary is horizontal or vertical
-    constructor(startx, starty, endx, endy, isHoriz) {
+    constructor(startx, starty, endx, endy, isHoriz, endGame) {
         this.start = createVector(startx, starty);
         this.end = createVector(endx, endy);
         this.horizontal = isHoriz;
+        this.doesEnd = endGame;
     }
 }
 
@@ -127,13 +128,14 @@ class Ball {
         if (Math.random() < .5) {
             yAccel = getRandomArbitrary(-3, -2)
         } else {
-            yAccel= getRandomArbitrary(2, 3)
+            yAccel = getRandomArbitrary(2, 3)
         }
         //log
         console.warn(xAccel, yAccel)
         //add to acceleration - zerored every frame
         this.accel = createVector(xAccel, yAccel)
         this.timeout = false;
+        setInterval(this.resetTimeout.bind(this), 250)
     }
 
     draw() {
@@ -146,10 +148,40 @@ class Ball {
 
 
     update() {
+
+
+        //Check for collisions on controllers - use controllers not players
+        controllers.forEach((controller) => {
+            if (this.timeout === false) {
+                let isColliding = collideRectCircleVector(createVector(controller.pos.x, controller.pos.y), createVector(controller.w, controller.h), this.pos, this.rad * 2)
+                if (isColliding === true) {
+                    this.vel.x = this.vel.x / -1;
+                    this.vel.x = this.vel.x * 1.4;
+
+                    //check if vectorX is too high to prevent distortion
+                    if ((this.vel.x / this.vel.y) > 1.5) {
+                        console.log("took effect")
+                        this.vel.y += getRandomArbitrary(-3, 3)
+                    } else {
+                        this.vel.y += getRandomArbitrary(-1, 1)
+                    }
+                    if (this.vel.x > 10) {
+                        this.vel.x = 10
+                    } else if (this.vel.x < -10)
+                        this.vel.x = -10
+                    this.timeout = true;
+                }
+            }
+
+        })
         //Check for collisions on edge
         boundaries.forEach((boundry) => {
             let isColliding = collideLineCircle(boundry.start.x, boundry.start.y, boundry.end.x, boundry.end.y, this.pos.x, this.pos.y, this.rad * 2)
             if (isColliding === true) {
+                //check if won game
+                if (boundry.doesEnd === true){
+                    death()
+                }
                 //check if boundry is horizontal or veritcal
                 if (boundry.horizontal === true) {
                     this.vel.y = this.vel.y / -1;
@@ -157,34 +189,8 @@ class Ball {
                     this.vel.x = this.vel.x / -1;
                 }
             }
+
         });
-        //Check for collisions on controllers - use controllers not players
-        controllers.forEach((controller) => {
-            if (this.timeout === false) {
-                let isColliding = collideRectCircleVector(createVector(controller.pos.x, controller.pos.y), createVector(controller.w, controller.h), this.pos, this.rad * 2)
-                if (isColliding === true) {
-                    this.vel.x = this.vel.x / -1;
-                    //vhange x and y velocity on hit to new value - make sure that velocity goes same way
-                    if (Math.sign(this.vel.x) === -1) {
-                        this.vel.x = getRandomArbitrary(-1, 0)
-                    } else {
-                        this.vel.x = getRandomArbitrary(0, 1)
-                    }
-                    if (Math.sign(this.vel.y) === -1) {
-                        this.vel.y = getRandomArbitrary(-1, 0)
-                    } else {
-                        this.vel.y = getRandomArbitrary(0, 1)
-                    }
-                    this.vel.x = getRandomArbitrary(0, 1)
-                    this.vel.y = getRandomArbitrary(0, 1)
-                    this.vel.mult(1 + Math.random())
-                    this.timeout = true;
-
-
-                }
-            }
-
-        })
         //Add acceleration to velocity
         this.vel.add(this.accel);
         //zero acceleration - avoids p5 warning message by not usage .div()
@@ -207,6 +213,20 @@ function keyReleased() {
 }
 
 
+function death() {
+    //reset class lists and push new ones
+    balls = []
+    balls.push(new Ball(canvasWidth / 2, canvasHeight / 2, 25))
+    controllers = []
+    players = []
+    let controller = new playerController(5, canvasHeight / 2, 10, 80, 38, 40)
+    players.push(controller)
+    controllers.push(controller)
+    let aiController1 = new aiController(885, canvasHeight / 2, 10, 80, 2, 1)
+    controllers.push(aiController1)
+    console.log(balls, players, controllers)
+}
+
 function setup() {
 
     canvas = createCanvas(canvasWidth, canvasHeight)
@@ -219,10 +239,10 @@ function setup() {
     //Create objects
     balls.push(new Ball(canvasWidth / 2, canvasHeight / 2, 25))
     //Create boundaries
-    boundaries.push(new Boundry(0, 1, 900, 1, true)) //Top
-    boundaries.push(new Boundry(0, 599, 900, 599, true)) // Bottom
-    boundaries.push(new Boundry(1, 0, 1, 600, false)) //Left
-    boundaries.push(new Boundry(899, 0, 899, 600, false)) //Right
+    boundaries.push(new Boundry(0, 1, 900, 1, true, false)) //Top
+    boundaries.push(new Boundry(0, 599, 900, 599, true, false)) // Bottom
+    boundaries.push(new Boundry(1, 0, 1, 600, false, true)) //Left
+    boundaries.push(new Boundry(899, 0, 899, 600, false, true)) //Right
     //Create controller
     let controller = new playerController(5, canvasHeight / 2, 10, 80, 38, 40)
     players.push(controller)
@@ -230,11 +250,6 @@ function setup() {
     //create AI controller
     let aiController1 = new aiController(885, canvasHeight / 2, 10, 80, 2, 1)
     controllers.push(aiController1)
-    //set balls collision reset system function
-    balls.forEach((ball) => {
-        setInterval(ball.resetTimeout.bind(ball), 100)
-
-    })
 }
 
 function draw() {
@@ -268,5 +283,6 @@ function draw() {
         controller.draw()
     })
 }
+
 
 console.log(keyPressed, keyReleased, setup, draw)
