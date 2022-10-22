@@ -25,6 +25,9 @@ class aiController {
         this.speed = speed
         this.speedUpChance = speedUpChance
         console.log(this.speedUpChance)
+        this.accel = createVector(0, 0)
+        this.vel = createVector(0, 0)
+
     }
 
     draw() {
@@ -60,12 +63,18 @@ class aiController {
         }
         //make target move words ball
         if (obj.pos.y < (((this.pos.y + length) - this.pos.y) / 2) + this.pos.y) {
-            this.pos.y -= this.speed
+            if (!(this.pos.y < 4)) {
+                console.log(obj.vel.y)
+                this.pos.y -= this.speed
+            }
+
         } else if (obj.pos.y > (((this.pos.y + length) - this.pos.y) / 2) + this.pos.y) {
             if (!(this.pos.y + this.h > (canvasHeight - 4))) {
+                console.log(obj.vel.y)
                 this.pos.y += this.speed
             }
         }
+
     }
 }
 
@@ -76,6 +85,8 @@ class playerController {
         this.h = length
         this.keyBindUp = keybindUp;
         this.keyBindDown = keybindDown;
+        this.accel = createVector(0, 0)
+        this.vel = createVector(0, 0)
     }
 
     draw() {
@@ -84,19 +95,33 @@ class playerController {
 
     down() {
         if (!(this.pos.y + this.h + sensitivity > canvasHeight - 4)) {
-            this.pos.y = this.pos.y + sensitivity
+            //this.pos.y = this.pos.y + sensitivity
+            this.accel.y += sensitivity / 4
         }
 
     }
 
     up() {
         if (!(this.pos.y - sensitivity < 4)) {
-            this.pos.y = this.pos.y - sensitivity
+            //this.pos.y = this.pos.y - sensitivity
+            this.accel.y -= sensitivity / 4
         }
 
     }
 
     update() {
+        this.vel.add(this.accel)
+
+        if(this.vel.y > sensitivity * 8){
+            this.vel.y = sensitivity * 8
+            console.log("g")
+        } else if(this.vel.y < sensitivity * -8){
+            this.vel.y = sensitivity * -8
+        }
+        this.accel.x = 0
+        this.accel.y = 0
+        this.pos.add(this.vel)
+        this.vel.y = this.vel.y / 1.05
     }
 
 }
@@ -219,10 +244,10 @@ function death() {
     balls.push(new Ball(canvasWidth / 2, canvasHeight / 2, 25))
     controllers = []
     players = []
-    let controller = new playerController(5, canvasHeight / 2, 10, 80, 38, 40)
+    let controller = new playerController(5, canvasHeight / 2, 10, 60, 38, 40)
     players.push(controller)
     controllers.push(controller)
-    let aiController1 = new aiController(885, canvasHeight / 2, 10, 80, 2, 1)
+    let aiController1 = new aiController(885, canvasHeight / 2, 10, 60, 3, 1)
     controllers.push(aiController1)
     console.log(balls, players, controllers)
 }
@@ -244,11 +269,11 @@ function setup() {
     boundaries.push(new Boundry(1, 0, 1, 600, false, true)) //Left
     boundaries.push(new Boundry(899, 0, 899, 600, false, true)) //Right
     //Create controller
-    let controller = new playerController(5, canvasHeight / 2, 10, 80, 38, 40)
+    let controller = new playerController(5, canvasHeight / 2, 10, 60, 38, 40)
     players.push(controller)
     controllers.push(controller)
     //create AI controller
-    let aiController1 = new aiController(885, canvasHeight / 2, 10, 80, 2, 1)
+    let aiController1 = new aiController(885, canvasHeight / 2, 10, 60, 3, 1)
     controllers.push(aiController1)
 }
 
