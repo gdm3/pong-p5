@@ -9,10 +9,94 @@ let boundaries = []
 let players = []
 let controllers = []
 let keyRelease = true
+let game
 
 /**
  * Returns a random number between min (inclusive) and max (exclusive)
  */
+
+
+class Game {
+    constructor(type) {
+        this.type = type
+    }
+
+    end() {
+        if (this.type == "AI") {
+            balls = []
+            boundaries = []
+            controllers = []
+            players = []
+        }
+    }
+
+    run() {
+        if (this.type == "AI") {
+            this.aiStart()
+        }
+    }
+
+    aiStart() {
+        //if game is ai then start ai game here - create arrays and stuff
+        balls.push(new Ball(canvasWidth / 2, canvasHeight / 2, 25))
+        //Create boundaries
+        boundaries.push(new Boundry(0, 1, 900, 1, true, false)) //Top
+        boundaries.push(new Boundry(0, 599, 900, 599, true, false)) // Bottom
+        boundaries.push(new Boundry(1, 0, 1, 600, false, true)) //Left
+        boundaries.push(new Boundry(899, 0, 899, 600, false, true)) //Right
+        //Create controller
+        let controller = new playerController(5, canvasHeight / 2, 10, 60, 38, 40)
+        players.push(controller)
+        controllers.push(controller)
+        //create AI controller
+        let aiController1 = new aiController(885, canvasHeight / 2, 10, 60, 3, 1)
+        controllers.push(aiController1)
+    }
+
+    aiUpdate() {
+        //set background
+        background(0);
+        //check for keys pressed
+        players.forEach((player) => {
+            if (keyRelease === false) {
+                if (keyCode === player.keyBindUp) {
+                    player.up()
+                } else if (keyCode === player.keyBindDown) {
+                    player.down()
+                }
+            }
+        })
+        //update physics
+
+        balls.forEach(function (ball) {
+            ball.update();
+        });
+        controllers.forEach((controller) => {
+            controller.update()
+        })
+
+        //draw balls
+        balls.forEach(function (ball) {
+            ball.draw();
+        });
+        //draw player controllers
+        controllers.forEach((controller) => {
+            controller.draw()
+        })
+    }
+    noneUpdate(){
+
+    }
+    update() {
+        if(this.type == "AI"){
+            this.aiUpdate()
+        } else if(this.type == "none"){
+            this.noneUpdate()
+        }
+    }
+
+}
+
 function getRandomArbitrary(min, max) {
     return Math.random() * (max - min) + min;
 }
@@ -25,8 +109,6 @@ class aiController {
         this.speed = speed
         this.speedUpChance = speedUpChance
         console.log(this.speedUpChance)
-        this.accel = createVector(0, 0)
-        this.vel = createVector(0, 0)
 
     }
 
@@ -64,13 +146,11 @@ class aiController {
         //make target move words ball
         if (obj.pos.y < (((this.pos.y + length) - this.pos.y) / 2) + this.pos.y) {
             if (!(this.pos.y < 4)) {
-                console.log(obj.vel.y)
                 this.pos.y -= this.speed
             }
 
         } else if (obj.pos.y > (((this.pos.y + length) - this.pos.y) / 2) + this.pos.y) {
             if (!(this.pos.y + this.h > (canvasHeight - 4))) {
-                console.log(obj.vel.y)
                 this.pos.y += this.speed
             }
         }
@@ -112,10 +192,10 @@ class playerController {
     update() {
         this.vel.add(this.accel)
 
-        if(this.vel.y > sensitivity * 8){
+        if (this.vel.y > sensitivity * 8) {
             this.vel.y = sensitivity * 8
             console.log("g")
-        } else if(this.vel.y < sensitivity * -8){
+        } else if (this.vel.y < sensitivity * -8) {
             this.vel.y = sensitivity * -8
         }
         this.accel.x = 0
@@ -204,7 +284,7 @@ class Ball {
             let isColliding = collideLineCircle(boundry.start.x, boundry.start.y, boundry.end.x, boundry.end.y, this.pos.x, this.pos.y, this.rad * 2)
             if (isColliding === true) {
                 //check if won game
-                if (boundry.doesEnd === true){
+                if (boundry.doesEnd === true) {
                     death()
                 }
                 //check if boundry is horizontal or veritcal
@@ -239,17 +319,8 @@ function keyReleased() {
 
 
 function death() {
-    //reset class lists and push new ones
-    balls = []
-    balls.push(new Ball(canvasWidth / 2, canvasHeight / 2, 25))
-    controllers = []
-    players = []
-    let controller = new playerController(5, canvasHeight / 2, 10, 60, 38, 40)
-    players.push(controller)
-    controllers.push(controller)
-    let aiController1 = new aiController(885, canvasHeight / 2, 10, 60, 3, 1)
-    controllers.push(aiController1)
-    console.log(balls, players, controllers)
+    game.end()
+    game.run()
 }
 
 function setup() {
@@ -262,51 +333,13 @@ function setup() {
     //Set framerate
     frameRate(_frameRate)
     //Create objects
-    balls.push(new Ball(canvasWidth / 2, canvasHeight / 2, 25))
-    //Create boundaries
-    boundaries.push(new Boundry(0, 1, 900, 1, true, false)) //Top
-    boundaries.push(new Boundry(0, 599, 900, 599, true, false)) // Bottom
-    boundaries.push(new Boundry(1, 0, 1, 600, false, true)) //Left
-    boundaries.push(new Boundry(899, 0, 899, 600, false, true)) //Right
-    //Create controller
-    let controller = new playerController(5, canvasHeight / 2, 10, 60, 38, 40)
-    players.push(controller)
-    controllers.push(controller)
-    //create AI controller
-    let aiController1 = new aiController(885, canvasHeight / 2, 10, 60, 3, 1)
-    controllers.push(aiController1)
+    game = new Game("AI")
+    game.run()
+
 }
 
 function draw() {
-    //set background
-    background(0);
-    //check for keys pressed
-    players.forEach((player) => {
-        if (keyRelease === false) {
-            if (keyCode === player.keyBindUp) {
-                player.up()
-            } else if (keyCode === player.keyBindDown) {
-                player.down()
-            }
-        }
-    })
-    //update physics
-
-    balls.forEach(function (ball) {
-        ball.update();
-    });
-    controllers.forEach((controller) => {
-        controller.update()
-    })
-
-    //draw balls
-    balls.forEach(function (ball) {
-        ball.draw();
-    });
-    //draw player controllers
-    controllers.forEach((controller) => {
-        controller.draw()
-    })
+    game.update()
 }
 
 
