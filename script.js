@@ -6,19 +6,55 @@ let sensitivity = 5
 let canvas
 let balls = []
 let boundaries = []
-let players = []
 let controllers = []
 let keyRelease = true
 let game
+let obj_down = {}
+let gui
+let gameMode = ["AI, Two Player"]
+let skill = 20
+//Key Handler
+window.addEventListener("keydown", function (ev) {
+    if (obj_down[event.key]) {
+
+        // prevent multiple triggering
+        return
+    }
+    obj_down[ev.keyCode] = true;
+    console.log(ev.keyCode)
+
+    if (obj_down["a"] && obj_down["d"]) {
+        console.log("a and d were pressed together! score++");
+    }
+})
+
+window.addEventListener("keyup", function (ev) {
+    delete obj_down[ev.keyCode];
+})
 
 /**
  * Returns a random number between min (inclusive) and max (exclusive)
  */
 
+class Button {
+    constructor(x1, x2, w, h, text, outline, outlineBordSize) {
 
+    }
+    clicked(){
+
+        return false;
+    }
+    update(){
+
+    }
+    draw(){
+
+    }
+}
 class Game {
     constructor(type) {
         this.type = type
+
     }
 
     end() {
@@ -26,7 +62,10 @@ class Game {
             balls = []
             boundaries = []
             controllers = []
-            players = []
+        } else if (this.type == "twoPlayer") {
+            balls = []
+            boundaries = []
+            controllers = []
         }
     }
 
@@ -34,11 +73,47 @@ class Game {
         if (this.type == "AI") {
             this.aiStart()
         }
+        if (this.type == "twoPlayer") {
+            this.twoPlayerStart()
+        }
+        if(this.type == "none"){
+            this.noneStart()
+        }
     }
+    endButtonHover(button){
+        button.buttonHovered = false;
+    }
+    startButtonHover(button){
 
-    aiStart() {
+        button.buttonHovered = true;
+    }
+    startButtonClicked(){
+        this.type = "twoPlayer"
+        this.twoPlayerStart()
+        this.startButton.hide()
+
+    }
+    noneStart(){
+        //Create start button
+        this.font = loadFont("Blippo Bold.ttf")
+        this.startButton = createButton("Start")
+        this.startButton.style("position", "absolute")
+        this.startButton.style("left", window.innerWidth / 2  - 45 + "px")
+        this.startButton.style("top", window.innerHeight / 2  - 45 + "px")
+        this.startButton.size(70, 30)
+        this.startButton.mouseOver(this.startButtonHover.bind(this, this.startButton))
+        this.startButton.mouseOut(this.endButtonHover.bind(this, this.startButton))
+        this.startButton.mouseClicked(this.startButtonClicked.bind(this))
+        this.startButton.style("background-color", "transparent")
+        this.startButton.style("color", "white")
+        this.startButton.style('border', '1px solid white')
+
+
+
+    }
+    twoPlayerStart() {
         //if game is ai then start ai game here - create arrays and stuff
-        balls.push(new Ball(canvasWidth / 2, canvasHeight / 2, 25))
+        balls.push(new Ball(canvasWidth / 2 + 1, canvasHeight / 2, 10))
         //Create boundaries
         boundaries.push(new Boundry(0, 1, 900, 1, true, false)) //Top
         boundaries.push(new Boundry(0, 599, 900, 599, true, false)) // Bottom
@@ -46,7 +121,22 @@ class Game {
         boundaries.push(new Boundry(899, 0, 899, 600, false, true)) //Right
         //Create controller
         let controller = new playerController(5, canvasHeight / 2, 10, 60, 38, 40)
-        players.push(controller)
+        controllers.push(controller)
+        //q and a
+        controller = new playerController(canvasWidth - 15, canvasHeight / 2, 10, 60, 81, 65)
+        controllers.push(controller)
+    }
+
+    aiStart() {
+        //if game is ai then start ai game here - create arrays and stuff
+        balls.push(new Ball(canvasWidth / 2, canvasHeight / 2, 10))
+        //Create boundaries
+        boundaries.push(new Boundry(0, 1, 900, 1, true, false)) //Top
+        boundaries.push(new Boundry(0, 599, 900, 599, true, false)) // Bottom
+        boundaries.push(new Boundry(1, 0, 1, 600, false, true)) //Left
+        boundaries.push(new Boundry(899, 0, 899, 600, false, true)) //Right
+        //Create controller
+        let controller = new playerController(5, canvasHeight / 2, 10, 60, 38, 40)
         controllers.push(controller)
         //create AI controller
         let aiController1 = new aiController(885, canvasHeight / 2, 10, 60, 3, 1)
@@ -56,16 +146,6 @@ class Game {
     aiUpdate() {
         //set background
         background(0);
-        //check for keys pressed
-        players.forEach((player) => {
-            if (keyRelease === false) {
-                if (keyCode === player.keyBindUp) {
-                    player.up()
-                } else if (keyCode === player.keyBindDown) {
-                    player.down()
-                }
-            }
-        })
         //update physics
 
         balls.forEach(function (ball) {
@@ -84,14 +164,53 @@ class Game {
             controller.draw()
         })
     }
-    noneUpdate(){
+
+    noneUpdate() {
+        background(0);
+        fill(255, 255, 255)
+        textFont(this.font)
+        textSize(60)
+        let txt = text("PONG", canvasWidth / 2 - 85, canvasHeight / 3.5)
+
+        if(this.startButton.buttonHovered === true){
+            this.startButton.style('border', '1px solid gray')
+            this.startButton.style('color', 'gray')
+        } else{
+            this.startButton.style('border', '1px solid white')
+            this.startButton.style('color', 'white')
+        }
 
     }
+
+    twoPlayerUpdate() {
+        //set background
+        background(0);
+        //update physics
+
+        balls.forEach(function (ball) {
+            ball.update();
+        });
+        controllers.forEach((controller) => {
+            controller.update()
+        })
+
+        //draw balls
+        balls.forEach(function (ball) {
+            ball.draw();
+        });
+        //draw player controllers
+        controllers.forEach((controller) => {
+            controller.draw()
+        })
+    }
+
     update() {
-        if(this.type == "AI"){
+        if (this.type == "AI") {
             this.aiUpdate()
-        } else if(this.type == "none"){
+        } else if (this.type == "none") {
             this.noneUpdate()
+        } else if (this.type == "twoPlayer") {
+            this.twoPlayerUpdate()
         }
     }
 
@@ -190,6 +309,11 @@ class playerController {
     }
 
     update() {
+        if (obj_down[this.keyBindUp]) {
+            this.up()
+        } else if (obj_down[this.keyBindDown]) {
+            this.down()
+        }
         this.vel.add(this.accel)
 
         if (this.vel.y > sensitivity * 8) {
@@ -308,16 +432,6 @@ class Ball {
 }
 
 
-function keyPressed() {
-    keyRelease = false
-}
-
-function keyReleased() {
-    keyRelease = true
-
-}
-
-
 function death() {
     game.end()
     game.run()
@@ -333,7 +447,7 @@ function setup() {
     //Set framerate
     frameRate(_frameRate)
     //Create objects
-    game = new Game("AI")
+    game = new Game("none")
     game.run()
 
 }
@@ -342,5 +456,4 @@ function draw() {
     game.update()
 }
 
-
-console.log(keyPressed, keyReleased, setup, draw)
+console.log(setup, draw)

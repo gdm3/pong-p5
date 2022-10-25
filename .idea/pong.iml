@@ -10,5 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="@types/p5" level="application" />
     <orderEntry type="library" name="p5.collide2d" level="application" />
+    <orderEntry type="library" name="p5.gui" level="application" />
+    <orderEntry type="library" name="quicksettings" level="application" />
   </component>
 </module>
