@@ -9,7 +9,8 @@ let boundaries = []
 let controllers = []
 let game
 let obj_down = {}
-
+let gameModed = "twoPlayer"
+let curGamemodeName = 'Two Player'
 //Key Handler
 window.addEventListener("keydown", function (ev) {
     if (obj_down[event.key]) {
@@ -35,6 +36,7 @@ window.addEventListener("keyup", function (ev) {
 class Game {
     constructor(type) {
         this.type = type
+        this.labelFont = loadFont("EightBitDragon-anqx.ttf")
     }
     //End of each game - on death - will change later
     end() {
@@ -69,12 +71,23 @@ class Game {
         button.buttonHovered = true;
     }
     //seperate button clicked functions
+
     startButtonClicked() {
-        this.type = "twoPlayer"
-        this.twoPlayerStart()
+        this.type = gameModed
+        if(this.type == "twoPlayer"){
+            this.twoPlayerStart()
+        } else if(this.type == "AI"){
+            this.aiStart()
+        }
         this.startButton.hide()
         this.optionsButton.hide()
 
+    }
+    aiButtonClicked() {
+        gameModed = "AI"
+    }
+    twoPlayerButtonClicked(){
+        gameModed = 'twoPlayer'
     }
     optionsButtonClicked() {
         this.type = "options"
@@ -88,6 +101,8 @@ class Game {
         this.startButton.show()
         this.optionsButton.show()
         this.backButton.hide()
+        this.aiButton.hide()
+        this.twoPlayerButton.hide()
     }
     noneStart() {
         //Create start button
@@ -131,6 +146,32 @@ class Game {
         this.backButton.style("color", "white")
         this.backButton.style('border', '1px solid white')
         this.backButton.style("font-family", "textFont")
+
+        this.twoPlayerButton = createButton("Two Players")
+        this.twoPlayerButton.style("position", "absolute")
+        this.twoPlayerButton.style("left", window.innerWidth / 2 - 400 + "px")
+        this.twoPlayerButton.style("top", window.innerHeight / 2 - 215 + "px")
+        this.twoPlayerButton.size(90, 40)
+        this.twoPlayerButton.mouseOver(this.startButtonHover.bind(this, this.twoPlayerButton))
+        this.twoPlayerButton.mouseOut(this.endButtonHover.bind(this, this.twoPlayerButton))
+        this.twoPlayerButton.mouseClicked(this.twoPlayerButtonClicked.bind(this))
+        this.twoPlayerButton.style("background-color", "transparent")
+        this.twoPlayerButton.style("color", "white")
+        this.twoPlayerButton.style('border', '1px solid white')
+        this.twoPlayerButton.style("font-family", "textFont")
+
+        this.aiButton = createButton("One Player")
+        this.aiButton.style("position", "absolute")
+        this.aiButton.style("left", window.innerWidth / 2 - 400 + "px")
+        this.aiButton.style("top", window.innerHeight / 2 - 165 + "px")
+        this.aiButton.size(90, 40)
+        this.aiButton.mouseOver(this.startButtonHover.bind(this, this.aiButton))
+        this.aiButton.mouseOut(this.endButtonHover.bind(this, this.aiButton))
+        this.aiButton.mouseClicked(this.aiButtonClicked.bind(this))
+        this.aiButton.style("background-color", "transparent")
+        this.aiButton.style("color", "white")
+        this.aiButton.style('border', '1px solid white')
+        this.aiButton.style("font-family", "textFont")
     }
     twoPlayerStart() {
         //if game is ai then start ai game here - create arrays and stuff
@@ -234,13 +275,40 @@ class Game {
     }
 
     optionsUpdate() {
+        if(gameModed == "twoPlayer"){
+            curGamemodeName = "Two Player"
+        }
+        else{
+            curGamemodeName = "One Player"
+        }
+
         background(0);
+        fill(255, 255, 255)
+        textFont(this.labelFont)
+        textSize(20)
+        text("GameMode Selection", 10, 30)
+        text("Current GameMode: " + curGamemodeName, 10, 60)
+
         if (this.backButton.buttonHovered === true) {
             this.backButton.style('border', '1px solid gray')
             this.backButton.style('color', 'gray')
         } else {
             this.backButton.style('border', '1px solid white')
             this.backButton.style('color', 'white')
+        }
+        if (this.aiButton.buttonHovered === true) {
+            this.aiButton.style('border', '1px solid gray')
+            this.aiButton.style('color', 'gray')
+        } else {
+            this.aiButton.style('border', '1px solid white')
+            this.aiButton.style('color', 'white')
+        }
+        if (this.twoPlayerButton.buttonHovered === true) {
+            this.twoPlayerButton.style('border', '1px solid gray')
+            this.twoPlayerButton.style('color', 'gray')
+        } else {
+            this.twoPlayerButton.style('border', '1px solid white')
+            this.twoPlayerButton.style('color', 'white')
         }
 
     }
