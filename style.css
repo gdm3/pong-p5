@@ -4,3 +4,7 @@ html, body {
     margin: 0px;
     padding: 0px;
 }
+@font-face {
+    font-family: textFont;
+    src: url(EightBitDragon-anqx.ttf);
+}

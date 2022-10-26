@@ -7,12 +7,9 @@ let canvas
 let balls = []
 let boundaries = []
 let controllers = []
-let keyRelease = true
 let game
 let obj_down = {}
-let gui
-let gameMode = ["AI, Two Player"]
-let skill = 20
+
 //Key Handler
 window.addEventListener("keydown", function (ev) {
     if (obj_down[event.key]) {
@@ -32,31 +29,14 @@ window.addEventListener("keyup", function (ev) {
     delete obj_down[ev.keyCode];
 })
 
-/**
- * Returns a random number between min (inclusive) and max (exclusive)
- */
 
-class Button {
-    constructor(x1, x2, w, h, text, outline, outlineBordSize) {
 
-    }
-    clicked(){
-
-        return false;
-    }
-    update(){
-
-    }
-    draw(){
-
-    }
-}
+//Game Class - Handles menus + game
 class Game {
     constructor(type) {
         this.type = type
-
     }
-
+    //End of each game - on death - will change later
     end() {
         if (this.type == "AI") {
             balls = []
@@ -68,7 +48,7 @@ class Game {
             controllers = []
         }
     }
-
+    //runs from the p5 setup function - no options menu - not needed!
     run() {
         if (this.type == "AI") {
             this.aiStart()
@@ -76,40 +56,81 @@ class Game {
         if (this.type == "twoPlayer") {
             this.twoPlayerStart()
         }
-        if(this.type == "none"){
+        if (this.type == "none") {
             this.noneStart()
         }
     }
-    endButtonHover(button){
+    //handles button hover events
+    endButtonHover(button) {
         button.buttonHovered = false;
     }
-    startButtonHover(button){
+    startButtonHover(button) {
 
         button.buttonHovered = true;
     }
-    startButtonClicked(){
+    //seperate button clicked functions
+    startButtonClicked() {
         this.type = "twoPlayer"
         this.twoPlayerStart()
         this.startButton.hide()
+        this.optionsButton.hide()
 
     }
-    noneStart(){
+    optionsButtonClicked() {
+        this.type = "options"
+        this.optionsStart()
+        this.startButton.hide()
+        this.optionsButton.hide()
+    }
+    backButtonClicked(){
+        this.type = "none"
+        this.noneStart()
+        this.startButton.show()
+        this.optionsButton.show()
+        this.backButton.hide()
+    }
+    noneStart() {
         //Create start button
-        this.font = loadFont("Blippo Bold.ttf")
+        this.titleFont = loadFont("Blippo Bold.ttf")
         this.startButton = createButton("Start")
         this.startButton.style("position", "absolute")
-        this.startButton.style("left", window.innerWidth / 2  - 45 + "px")
-        this.startButton.style("top", window.innerHeight / 2  - 45 + "px")
-        this.startButton.size(70, 30)
+        this.startButton.style("left", window.innerWidth / 2 - 55 + "px")
+        this.startButton.style("top", window.innerHeight / 2 - 45 + "px")
+        this.startButton.size(90, 40)
         this.startButton.mouseOver(this.startButtonHover.bind(this, this.startButton))
         this.startButton.mouseOut(this.endButtonHover.bind(this, this.startButton))
         this.startButton.mouseClicked(this.startButtonClicked.bind(this))
         this.startButton.style("background-color", "transparent")
         this.startButton.style("color", "white")
         this.startButton.style('border', '1px solid white')
+        this.startButton.style("font-family", "textFont")
 
-
-
+        this.optionsButton = createButton("Options")
+        this.optionsButton.style("position", "absolute")
+        this.optionsButton.style("left", window.innerWidth / 2 - 55 + "px")
+        this.optionsButton.style("top", window.innerHeight / 2 + 10 + "px")
+        this.optionsButton.size(90, 40)
+        this.optionsButton.mouseOver(this.startButtonHover.bind(this, this.optionsButton))
+        this.optionsButton.mouseOut(this.endButtonHover.bind(this, this.optionsButton))
+        this.optionsButton.mouseClicked(this.optionsButtonClicked.bind(this))
+        this.optionsButton.style("background-color", "transparent")
+        this.optionsButton.style("color", "white")
+        this.optionsButton.style('border', '1px solid white')
+        this.optionsButton.style("font-family", "textFont")
+    }
+    optionsStart(){
+        this.backButton = createButton("Back")
+        this.backButton.style("position", "absolute")
+        this.backButton.style("left", window.innerWidth / 2 - 55 + "px")
+        this.backButton.style("top", window.innerHeight / 2 + 200 + "px")
+        this.backButton.size(90, 40)
+        this.backButton.mouseOver(this.startButtonHover.bind(this, this.backButton))
+        this.backButton.mouseOut(this.endButtonHover.bind(this, this.backButton))
+        this.backButton.mouseClicked(this.backButtonClicked.bind(this))
+        this.backButton.style("background-color", "transparent")
+        this.backButton.style("color", "white")
+        this.backButton.style('border', '1px solid white')
+        this.backButton.style("font-family", "textFont")
     }
     twoPlayerStart() {
         //if game is ai then start ai game here - create arrays and stuff
@@ -168,16 +189,23 @@ class Game {
     noneUpdate() {
         background(0);
         fill(255, 255, 255)
-        textFont(this.font)
+        textFont(this.titleFont)
         textSize(60)
-        let txt = text("PONG", canvasWidth / 2 - 85, canvasHeight / 3.5)
+        text("PONG", canvasWidth / 2 - 85, canvasHeight / 3.5)
 
-        if(this.startButton.buttonHovered === true){
+        if (this.startButton.buttonHovered === true) {
             this.startButton.style('border', '1px solid gray')
             this.startButton.style('color', 'gray')
-        } else{
+        } else {
             this.startButton.style('border', '1px solid white')
             this.startButton.style('color', 'white')
+        }
+        if (this.optionsButton.buttonHovered === true) {
+            this.optionsButton.style('border', '1px solid gray')
+            this.optionsButton.style('color', 'gray')
+        } else {
+            this.optionsButton.style('border', '1px solid white')
+            this.optionsButton.style('color', 'white')
         }
 
     }
@@ -202,15 +230,31 @@ class Game {
         controllers.forEach((controller) => {
             controller.draw()
         })
+
+    }
+
+    optionsUpdate() {
+        background(0);
+        if (this.backButton.buttonHovered === true) {
+            this.backButton.style('border', '1px solid gray')
+            this.backButton.style('color', 'gray')
+        } else {
+            this.backButton.style('border', '1px solid white')
+            this.backButton.style('color', 'white')
+        }
+
     }
 
     update() {
-        if (this.type == "AI") {
+        //run each update function
+        if (this.type === "AI") {
             this.aiUpdate()
-        } else if (this.type == "none") {
+        } else if (this.type === "none") {
             this.noneUpdate()
-        } else if (this.type == "twoPlayer") {
+        } else if (this.type === "twoPlayer") {
             this.twoPlayerUpdate()
+        } else if (this.type === "options") {
+            this.optionsUpdate()
         }
     }
 
